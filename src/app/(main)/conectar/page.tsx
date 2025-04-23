@@ -19,8 +19,7 @@ export default function WhatsAppConnectionPage() {
 
   const checkConnectionStatus = async () => {
     try {
-      // Simulação de verificação de conexão
-      const res = await fetch('http://localhost:4000/whatsapp/status');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/whatsapp/status`);
       const mockResponse = { 
         connected: !!res.json, 
         phoneNumber: mockPhoneNumber
@@ -44,7 +43,7 @@ export default function WhatsAppConnectionPage() {
   const fetchQrCode = async () => {
     try {
       // Simulação de geração de QR Code
-      const res = await fetch('http://localhost:4000/whatsapp/qrcode-base64');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/whatsapp/qrcode-base64`);
       const data = await res.json();
       if (data.qrCode) setQrCode(data.qrCode);
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simula atraso na geração do QR Code
@@ -57,7 +56,7 @@ export default function WhatsAppConnectionPage() {
     try {
       setLoading(true);
       // Simulação de logout
-      await fetch('http://localhost:4000/whatsapp/logout', { method: 'GET' });
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/whatsapp/logout`);
       await new Promise(resolve => setTimeout(resolve, 1000));
       setIsConnected(false);
       setPhoneNumber(null);
