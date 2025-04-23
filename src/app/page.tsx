@@ -1,7 +1,7 @@
 'use client'; // Necessário para hooks e interatividade
 
 import { useState } from 'react';
-import { FiCalendar, FiClock, FiEdit, FiPlus, FiStar, FiList } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiEdit, FiPlus, FiStar } from 'react-icons/fi';
 
 export default function AgendamentoPage() {
   // Estado para controlar qual seção está ativa

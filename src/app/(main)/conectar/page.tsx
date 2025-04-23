@@ -1,6 +1,7 @@
 // app/qrcode/page.tsx
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export default function QrCodePage() {
@@ -27,11 +28,14 @@ export default function QrCodePage() {
       <div className="bg-background shadow-lg rounded-xl p-6 text-center">
         <h1 className="text-2xl font-semibold mb-4">Conecte-se ao WhatsApp</h1>
         {qrCode ? (
-          <img
-            src={qrCode}
-            alt="QR Code do WhatsApp"
-            className="w-64 h-64 mx-auto"
-          />
+          <div className="relative w-64 h-64 mx-auto">
+            <Image
+              src={qrCode}
+              alt="QR Code do WhatsApp"
+              layout="fill"
+              objectFit="contain"
+            />
+          </div>
         ) : (
           <p className="text-gray-500">Carregando QR Code...</p>
         )}
