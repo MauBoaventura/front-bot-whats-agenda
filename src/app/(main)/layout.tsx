@@ -36,6 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { key: '7', icon: <UserOutlined />, label: <Link href={`/clientes`}>Clientes</Link> },
     { key: '8', icon: <BarChartOutlined />, label: <Link href={`/relatorios`}>Relatórios</Link> },
     { key: '9', icon: <ScissorOutlined />, label: <Link href={`/servicos`}>Serviços</Link> },
+    { key: '10', icon: <ScissorOutlined />, label: <Link href={`/conectar`}>Conectar ao WhatsApp</Link> },
   ];
 
  
