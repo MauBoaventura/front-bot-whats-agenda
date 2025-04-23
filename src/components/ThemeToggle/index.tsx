@@ -1,6 +1,8 @@
 // components/ThemeToggle.tsx
 "use client"; // Componente Client-Side
 
+import { MoonFilled, SunFilled } from '@ant-design/icons';
+import { FloatButton } from 'antd';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
@@ -14,10 +16,9 @@ export function ThemeToggle() {
   if (!mounted) return null;
 
   return (
-    <button
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-    >
-      {theme === 'dark' ? '🌞 Light' : '🌙 Dark'}
-    </button>
+    <FloatButton 
+      icon={theme === 'dark' ? <SunFilled className='!text-yellow-500'/> :<MoonFilled className='!text-blue-500'/>} 
+      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+    />
   );
 }

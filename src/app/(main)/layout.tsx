@@ -1,5 +1,6 @@
 'use client';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useConfiguracao } from '@/providers/configuracao-provider/configuracao-provider';
 import {
   BarChartOutlined,
   CalendarOutlined,
@@ -15,14 +16,15 @@ import {
 } from '@ant-design/icons';
 import { Avatar, Button, Layout, Menu, Space, Typography, type MenuProps } from 'antd';
 import { useTheme } from 'next-themes';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsedSidebar, setCollapsedSidebar } = useConfiguracao();
+
   const { theme } = useTheme();
 
   // Itens do Menu (Sidebar)
@@ -39,14 +41,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { key: '10', icon: <ScissorOutlined />, label: <Link href={`/conectar`}>Conectar ao WhatsApp</Link> },
   ];
 
- 
+
   return (
     <Layout hasSider className="min-h-screen">
       {/* Sidebar (fixa e ocupando 100% da altura) */}
       <Sider
         collapsible
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
+        collapsed={collapsedSidebar}
+        onCollapse={(value) => setCollapsedSidebar(value)}
         width={250}
         collapsedWidth={80}
         theme={theme === 'dark' ? 'dark' : 'light'}
@@ -61,12 +63,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }}
       >
         <div className="p-4 flex items-center justify-center h-16">
-          {!collapsed ? (
-            <Title level={4} className="m-0 text-blue-900">
-              Agendamento
+          {!collapsedSidebar ? (
+            <Title level={4} className="m-0 text-blue-900 flex items-center gap-2">
+              <Image src={theme === 'dark' ? '/assets/logo-dark-mauboa.png' : '/assets/logo-mauboa.png'} alt="Logo" width={64} height={64} />
             </Title>
           ) : (
-            <CalendarOutlined className="text-xl text-blue-600" />
+            <Image src={theme === 'dark' ? '/assets/logo-dark-mauboa.png' : '/assets/logo-mauboa.png'} alt="Logo" width={64} height={64} />
           )}
         </div>
         <Menu
@@ -80,7 +82,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <Layout
         style={{
-          marginLeft: collapsed ? 80 : 250,
+          marginLeft: collapsedSidebar ? 80 : 250,
           minHeight: '100vh',
         }}
       >
@@ -98,8 +100,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Button
               className=' text-blue-100'
               type="text"
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={() => setCollapsed(!collapsed)}
+              icon={collapsedSidebar ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsedSidebar(!collapsedSidebar)}
             />
             <Title level={5} className="!m-0 text-blue-100">
               Painel de Controle
