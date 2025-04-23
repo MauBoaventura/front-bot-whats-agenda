@@ -60,7 +60,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Header fixo */}
       <Header
         className={`fixed top-0 z-[100] flex h-16 w-full items-center justify-between shadow-md transition-all duration-300 !pl-4 ${
-          theme === 'dark' ? 'bg-[#001529]' : 'bg-white'
+          theme === 'dark' ? 'bg-[#001529]' : '!bg-white'
         } ${!isMobile && !collapsedSidebar ? 'ml-[250px]' : !isMobile ? 'ml-[80px]' : 'ml-0'} px-4`}
       >
         <Space className='flex items-center'>
@@ -132,7 +132,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           closable={false}
           onClose={() => setMobileMenuVisible(false)}
           open={mobileMenuVisible}
-          styles={{ body: { padding: 0, backgroundColor: 'var(--white)' }, }}
+          styles={{ body: { padding: 0, backgroundColor: '#001529' }, }}
           width={250}
           className='bg-white dark:bg-[#001529] text-black dark:text-white'
         >
