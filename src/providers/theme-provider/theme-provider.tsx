@@ -10,7 +10,7 @@ interface Props {
 
 export function ThemeProvider({ children }: Props) {
   return (
-    <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
+    <NextThemesProvider attribute="class" defaultTheme="dark" enableSystem>
       <AntdConfig>{children}</AntdConfig>
     </NextThemesProvider>
   );
