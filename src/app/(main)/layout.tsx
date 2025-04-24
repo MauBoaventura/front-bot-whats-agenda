@@ -1,5 +1,6 @@
 'use client';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useLocation } from '@/hooks';
 import { useConfiguracao } from '@/providers/configuracao-provider/configuracao-provider';
 import {
   BarChartOutlined,
@@ -30,6 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { theme } = useTheme();
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
+  const { pathname } = useLocation();
 
   // Verificar se é mobile
   useEffect(() => {
@@ -45,15 +47,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const menuItems: MenuProps['items'] = [
     { key: '1', icon: <HomeOutlined />, label: <Link href={`/dashboard`} onClick={() => setMobileMenuVisible(false)}>Início</Link> },
     { key: '2', icon: <CalendarOutlined />, label: <Link href={`/agenda`} onClick={() => setMobileMenuVisible(false)}>Agenda do Dia</Link> },
-    { key: '3', icon: <StarOutlined />, label: <Link href={`/feedbacks`} onClick={() => setMobileMenuVisible(false)}>Feedbacks</Link> },
     { key: '4', icon: <EditOutlined />, label: <Link href={`/agendamento`} onClick={() => setMobileMenuVisible(false)}>Criar Agendamento</Link> },
+    { key: '7', icon: <UserOutlined />, label: <Link href={`/clientes`} onClick={() => setMobileMenuVisible(false)}>Clientes</Link> },
     { key: '5', icon: <ClockCircleOutlined />, label: <Link href={`/horarios`} onClick={() => setMobileMenuVisible(false)}>Horários de Atendimento</Link> },
     { key: '6', icon: <SettingOutlined />, label: <Link href={`/configuracoes`} onClick={() => setMobileMenuVisible(false)}>Configurações</Link> },
-    { key: '7', icon: <UserOutlined />, label: <Link href={`/clientes`} onClick={() => setMobileMenuVisible(false)}>Clientes</Link> },
     { key: '8', icon: <BarChartOutlined />, label: <Link href={`/relatorios`} onClick={() => setMobileMenuVisible(false)}>Relatórios</Link> },
     { key: '9', icon: <ScissorOutlined />, label: <Link href={`/servicos`} onClick={() => setMobileMenuVisible(false)}>Serviços</Link> },
+    { key: '3', icon: <StarOutlined />, label: <Link href={`/feedbacks`} onClick={() => setMobileMenuVisible(false)}>Feedbacks</Link> },
     { key: '10', icon: <ScissorOutlined />, label: <Link href={`/conectar`} onClick={() => setMobileMenuVisible(false)}>Conectar ao WhatsApp</Link> },
   ];
+
+const mapPathToKey = (path: string) => {
+    const pathMap: Record<string, string> = {
+      '/dashboard': '1',
+      '/agenda': '2',
+      '/feedbacks': '3',
+      '/agendamento': '4',
+      '/horarios': '5',
+      '/configuracoes': '6',
+      '/clientes': '7',
+      '/relatorios': '8',
+      '/servicos': '9',
+      '/conectar': '10',
+    };
+    return pathMap[path] || '1'; // Retorna '1' como padrão se o caminho não estiver mapeado
+  };
 
   return (
     <Layout className="min-h-screen">
@@ -118,6 +136,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Menu
             mode="inline"
             defaultSelectedKeys={['1']}
+            selectedKeys={[mapPathToKey(pathname)]}
             items={menuItems}
             theme={theme === 'dark' ? 'dark' : 'light'}
             className="border-r-0"
