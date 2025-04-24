@@ -29,7 +29,7 @@ export default function ServicosPage() {
   // Função para buscar os serviços da API
   const fetchServices = async () => {
     setLoading(true);
-    try {alert(`${process.env.NEXT_PUBLIC_API_BASE_URL}/servicos`)
+    try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/servicos`);
       if (!response.ok) {
         throw new Error('Erro ao buscar serviços');
@@ -115,7 +115,7 @@ export default function ServicosPage() {
   const mobileColumns: ColumnsType<ServiceType> = [
     {
       title: 'Serviço',
-      render: (_, record, index) => (
+      render: (_, record) => (
         <div className="flex flex-col">
           <span className="font-medium">{record.name}</span>
           <div className="text-xs text-gray-500">
