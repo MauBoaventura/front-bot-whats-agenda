@@ -151,9 +151,9 @@ const mapPathToKey = (path: string) => {
           closable={false}
           onClose={() => setMobileMenuVisible(false)}
           open={mobileMenuVisible}
-          styles={{ body: { padding: 0, backgroundColor: '#001529' }, }}
+          styles={{ body: { padding: 0 }, }}
           width={250}
-          className='bg-white dark:bg-[#001529] text-black dark:text-white'
+          className={`${theme === 'dark' ? '!bg-[#001529]' : ''}`}
         >
           <div className="p-4 flex items-center justify-center h-16 border-b">
             <Image

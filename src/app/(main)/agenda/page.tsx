@@ -6,6 +6,7 @@ import { Avatar, Badge, Button, Card, DatePicker, Drawer, Dropdown, Input, MenuP
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 dayjs.locale('pt-br');
@@ -66,7 +67,7 @@ const appointments: AppointmentType[] = [
 export default function AgendaPage() {
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
-
+  const router = useRouter();
   // Adicione no topo do seu componente (dentro do AgendaPage)
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [paymentFilter, setPaymentFilter] = useState<string | null>(null);
@@ -315,7 +316,9 @@ export default function AgendaPage() {
         height="auto"
       >
         <div className="flex flex-col gap-4">
-          <Button type="primary" icon={<PlusOutlined />} block>
+          <Button type="primary" icon={<PlusOutlined />} block
+            onClick={() => router.push('/agendamento')}
+          >
             Novo Agendamento
           </Button>
 
