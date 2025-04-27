@@ -1,6 +1,6 @@
 "use client";
 
-import { ConfigProvider, theme as antdTheme } from "antd";
+import { theme as antdTheme, App, ConfigProvider } from "antd";
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import * as React from "react";
 
@@ -35,8 +35,10 @@ function AntdConfig({ children }: { children: React.ReactNode }) {
       : antdTheme.defaultAlgorithm;
 
   return (
-    <ConfigProvider theme={{ algorithm }}>
-      {children}
-    </ConfigProvider>
+    <App>
+      <ConfigProvider theme={{ algorithm }}>
+        {children}
+      </ConfigProvider>
+    </App>
   );
 }
