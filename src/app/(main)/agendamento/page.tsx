@@ -246,7 +246,7 @@ export default function CriarAgendamentoPage() {
               <Form.Item
                 label="Profissional"
                 name="professional"
-                rules={[{ required: true, message: 'Selecione um profissional' }]}
+                rules={[{ required: false, message: 'Selecione um profissional' }]}
               >
                 <Select placeholder="Selecione o profissional">
                   {professionals.map(pro => (
