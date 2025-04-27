@@ -2,9 +2,8 @@
 import { useMessage } from "@/hooks/useMessage";
 import {
   FilterOutlined,
-  MoreOutlined,
   SearchOutlined,
-  UserAddOutlined,
+  UserAddOutlined
 } from '@ant-design/icons';
 import {
   Avatar,
@@ -27,7 +26,7 @@ import { useEffect, useState } from 'react';
 const { useBreakpoint } = Grid;
 
 interface AppointmentType {
-  key: string;
+  id: string;
   name: string;
   phone: string;
   email: string;
@@ -37,7 +36,7 @@ interface AppointmentType {
 
 export default function ClientesPage() {
   const screens = useBreakpoint();
-  const  message  = useMessage();
+  const message = useMessage();
   const isMobile = !screens.md;
 
   const [searchText, setSearchText] = useState('');
@@ -61,7 +60,7 @@ export default function ClientesPage() {
 
       // Formatar os dados recebidos da API
       const formattedData: AppointmentType[] = data.map((item: any) => ({
-        key: String(item.id),
+        id: String(item.id),
         name: item.nome,
         phone: item.telefone,
         email: item.email,
@@ -93,54 +92,102 @@ export default function ClientesPage() {
     return matchesSearch && matchesLoyalty;
   });
 
-    const handleCreateClient = async (values: AppointmentType) => {
+  const handleCreateOrUpdateClient = async (values: AppointmentType) => {
     setLoading(true);
     try {
-      // Enviar os dados para a API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/clientes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          nome: values.name,
-          telefone: values.phone,
-          email: values.email,
-          fidelidade: values.loyalty,
-        }),
-      });
+      const newClient = {
+        id: values.id || null, // Se não houver ID, é uma criação
+        nome: values.name,
+        telefone: values.phone,
+        email: values.email,
+        fidelidade: values.loyalty,
+      };
+      const { id, ...clientData } = newClient;
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessage = errorData.message?.join(', ') || 'Erro ao criar cliente';
-        message.error(errorMessage);
-        return;
+      if (!newClient.id) {
+        // Criação de um novo cliente
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/clientes`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(clientData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          const errorMessage = errorData.message || 'Erro ao criar cliente';
+          message.error(errorMessage);
+          return;
+        }
+
+        const createdClient = await response.json();
+
+        // Atualizar a lista localmente
+        setClients((prev) => [
+          ...prev,
+          {
+            id: String(createdClient.id),
+            name: createdClient.nome,
+            phone: createdClient.telefone,
+            email: createdClient.email,
+            avatar: createdClient.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 10) + 1}`,
+            loyalty: createdClient.fidelidade || 'Regular',
+          },
+        ]);
+
+        message.success('Cliente criado com sucesso!');
+      } else {
+        // Atualização de um cliente existente
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/clientes/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(clientData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          const errorMessage = errorData.message || 'Erro ao atualizar cliente';
+          message.error(errorMessage);
+          return;
+        }
+
+        const updatedClient = await response.json();
+
+        // Atualizar a lista localmente
+        setClients((prev) =>
+          prev.map((client) =>
+            client.id === updatedClient.id
+              ? {
+                id: String(updatedClient.id),
+                name: updatedClient.nome,
+                phone: updatedClient.telefone,
+                email: updatedClient.email,
+                avatar: updatedClient.avatar || client.avatar,
+                loyalty: updatedClient.fidelidade || 'Regular',
+              }
+              : client
+          )
+        );
+
+        message.success('Cliente atualizado com sucesso!');
       }
 
-      const newClient = await response.json();
-
-      // Atualizar a lista localmente
-      setClients((prev) => [
-        ...prev,
-        {
-          key: String(newClient.id),
-          name: newClient.nome,
-          phone: newClient.telefone,
-          email: newClient.email,
-          avatar: newClient.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 10) + 1}`,
-          loyalty: newClient.fidelidade || 'Regular',
-        },
-      ]);
-
-      message.success('Cliente criado com sucesso!');
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {
       console.error(error);
-      message.error('Erro ao criar o cliente');
+      message.error('Erro ao salvar o cliente');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditClient = async (client: AppointmentType) => {
+    form.setFieldsValue(client);
+    setIsModalVisible(true);
   };
 
   const mobileColumns: ColumnsType<AppointmentType> = [
@@ -164,8 +211,8 @@ export default function ClientesPage() {
             record.loyalty === 'VIP'
               ? 'gold'
               : record.loyalty === 'Premium'
-              ? 'blue'
-              : 'default'
+                ? 'blue'
+                : 'default'
           }
           className="text-xs"
         >
@@ -175,17 +222,21 @@ export default function ClientesPage() {
     },
     {
       title: '',
-      render: () => (
+      align: 'right',
+      render: (_, record) => (
         <Dropdown
           menu={{
             items: [
-              { key: '1', label: 'Editar' },
-              { key: '2', label: 'Desativar', danger: true },
+              {
+                key: 'edit',
+                label: 'Editar',
+                onClick: () => handleEditClient(record),
+              },
             ],
           }}
           trigger={['click']}
         >
-          <Button type="text" icon={<MoreOutlined />} size="small" />
+          <Button type="text">⋮</Button>
         </Dropdown>
       ),
       width: 40,
@@ -212,8 +263,8 @@ export default function ClientesPage() {
             record.loyalty === 'VIP'
               ? 'gold'
               : record.loyalty === 'Premium'
-              ? 'blue'
-              : 'default'
+                ? 'blue'
+                : 'default'
           }
         >
           {record.loyalty}
@@ -221,14 +272,24 @@ export default function ClientesPage() {
       ),
     },
     {
-      title: 'Ações',
-      render: () => (
-        <Space>
-          <Button size="small">Editar</Button>
-          <Button size="small" danger>
-            Desativar
-          </Button>
-        </Space>
+      title: '',
+      align: 'right',
+      width: 50,
+      render: (_, record) => (
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: 'edit',
+                label: 'Editar',
+                onClick: () => handleEditClient(record),
+              },
+            ],
+          }}
+          trigger={['click']}
+        >
+          <Button type="text">⋮</Button>
+        </Dropdown>
       ),
     },
   ];
@@ -296,45 +357,49 @@ export default function ClientesPage() {
 
       {/* Modal para criar cliente */}
       <Modal
-        title="Novo Cliente"
+        title={form.getFieldValue('id') ? "Atualizar Cliente" : "Novo Cliente"}
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         onOk={() => form.submit()}
-        okText="Criar"
+        okText={form.getFieldValue('id') ? "Atualizar" : "Criar"}
         cancelText="Cancelar"
+        confirmLoading={loading}
       >
-        <Form form={form} layout="vertical" onFinish={handleCreateClient}>
-          <Form.Item
-            label="Nome"
-            name="name"
-            rules={[{ required: true, message: 'Por favor, insira o nome do cliente' }]}
-          >
-            <Input placeholder="Ex: João Silva" />
+        <Form form={form} layout="vertical" onFinish={handleCreateOrUpdateClient}>
+          <Form.Item name="id" hidden>
+        <Input />
           </Form.Item>
           <Form.Item
-            label="Telefone"
-            name="phone"
-            rules={[{ required: true, message: 'Por favor, insira o telefone do cliente' }]}
+        label="Nome"
+        name="name"
+        rules={[{ required: true, message: 'Por favor, insira o nome do cliente' }]}
           >
-            <Input placeholder="Ex: (11) 98765-4321" />
+        <Input placeholder="Ex: João Silva" />
           </Form.Item>
           <Form.Item
-            label="E-mail"
-            name="email"
-            rules={[{ required: false, message: 'Por favor, insira o e-mail do cliente' }]}
+        label="Telefone"
+        name="phone"
+        rules={[{ required: true, message: 'Por favor, insira o telefone do cliente' }]}
           >
-            <Input placeholder="Ex: joao.silva@example.com" />
+        <Input placeholder="Ex: (11) 98765-4321" />
           </Form.Item>
           <Form.Item
-            label="Nível de Fidelidade"
-            name="loyalty"
-            rules={[{ required: true, message: 'Por favor, selecione o nível de fidelidade' }]}
+        label="E-mail"
+        name="email"
+        rules={[{ required: false, message: 'Por favor, insira o e-mail do cliente' }]}
           >
-            <Select placeholder="Selecione o nível de fidelidade">
-              <Select.Option value="VIP">VIP</Select.Option>
-              <Select.Option value="Premium">Premium</Select.Option>
-              <Select.Option value="Regular">Regular</Select.Option>
-            </Select>
+        <Input placeholder="Ex: joao.silva@example.com" />
+          </Form.Item>
+          <Form.Item
+        label="Nível de Fidelidade"
+        name="loyalty"
+        rules={[{ required: true, message: 'Por favor, selecione o nível de fidelidade' }]}
+          >
+        <Select placeholder="Selecione o nível de fidelidade">
+          <Select.Option value="VIP">VIP</Select.Option>
+          <Select.Option value="Premium">Premium</Select.Option>
+          <Select.Option value="Regular">Regular</Select.Option>
+        </Select>
           </Form.Item>
         </Form>
       </Modal>
