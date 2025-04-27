@@ -1,4 +1,5 @@
 'use client';
+import { useMessage } from "@/hooks/useMessage";
 import {
   FilterOutlined,
   MoreOutlined,
@@ -11,14 +12,17 @@ import {
   Card,
   Drawer,
   Dropdown,
+  Form,
   Grid,
   Input,
+  Modal,
+  Select,
   Space,
   Table,
   Tag,
 } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const { useBreakpoint } = Grid;
 
@@ -31,58 +35,54 @@ interface AppointmentType {
   loyalty: string;
 }
 
-const mockData: AppointmentType[] = [
-  {
-    key: '1',
-    name: 'João Silva',
-    phone: '(11) 98765-4321',
-    email: 'joao.silva@example.com',
-    avatar: 'https://i.pravatar.cc/150?img=1',
-    loyalty: 'VIP',
-  },
-  {
-    key: '2',
-    name: 'Maria Oliveira',
-    phone: '(21) 91234-5678',
-    email: 'maria.oliveira@example.com',
-    avatar: 'https://i.pravatar.cc/150?img=2',
-    loyalty: 'Regular',
-  },
-  {
-    key: '3',
-    name: 'Carlos Santos',
-    phone: '(31) 99876-5432',
-    email: 'carlos.santos@example.com',
-    avatar: 'https://i.pravatar.cc/150?img=3',
-    loyalty: 'Premium',
-  },
-  {
-    key: '4',
-    name: 'Ana Costa',
-    phone: '(41) 98765-1234',
-    email: 'ana.costa@example.com',
-    avatar: 'https://i.pravatar.cc/150?img=4',
-    loyalty: 'VIP',
-  },
-  {
-    key: '5',
-    name: 'Pedro Almeida',
-    phone: '(51) 91234-8765',
-    email: 'pedro.almeida@example.com',
-    avatar: 'https://i.pravatar.cc/150?img=5',
-    loyalty: 'Regular',
-  },
-];
-
 export default function ClientesPage() {
   const screens = useBreakpoint();
+  const  message  = useMessage();
   const isMobile = !screens.md;
 
   const [searchText, setSearchText] = useState('');
   const [isFilterDrawerVisible, setIsFilterDrawerVisible] = useState(false);
   const [loyaltyFilter, setLoyaltyFilter] = useState<string | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [clients, setClients] = useState<AppointmentType[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
 
-  const filteredData = mockData.filter((client) => {
+  // Função para buscar os clientes da API
+  const fetchClients = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/clientes`);
+      if (!response.ok) {
+        throw new Error('Erro ao buscar clientes');
+      }
+
+      const data = await response.json();
+
+      // Formatar os dados recebidos da API
+      const formattedData: AppointmentType[] = data.map((item: any) => ({
+        key: String(item.id),
+        name: item.nome,
+        phone: item.telefone,
+        email: item.email,
+        avatar: item.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 10) + 1}`,
+        loyalty: item.fidelidade || 'Regular',
+      }));
+
+      setClients(formattedData);
+    } catch (error) {
+      console.error(error);
+      message.error('Erro ao carregar os clientes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClients(); // Buscar clientes ao carregar a página
+  }, []);
+
+  const filteredData = clients.filter((client) => {
     const matchesSearch =
       client.name.toLowerCase().includes(searchText.toLowerCase()) ||
       client.phone.includes(searchText) ||
@@ -92,6 +92,56 @@ export default function ClientesPage() {
 
     return matchesSearch && matchesLoyalty;
   });
+
+    const handleCreateClient = async (values: AppointmentType) => {
+    setLoading(true);
+    try {
+      // Enviar os dados para a API
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/clientes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nome: values.name,
+          telefone: values.phone,
+          email: values.email,
+          fidelidade: values.loyalty,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMessage = errorData.message?.join(', ') || 'Erro ao criar cliente';
+        message.error(errorMessage);
+        return;
+      }
+
+      const newClient = await response.json();
+
+      // Atualizar a lista localmente
+      setClients((prev) => [
+        ...prev,
+        {
+          key: String(newClient.id),
+          name: newClient.nome,
+          phone: newClient.telefone,
+          email: newClient.email,
+          avatar: newClient.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 10) + 1}`,
+          loyalty: newClient.fidelidade || 'Regular',
+        },
+      ]);
+
+      message.success('Cliente criado com sucesso!');
+      setIsModalVisible(false);
+      form.resetFields();
+    } catch (error) {
+      console.error(error);
+      message.error('Erro ao criar o cliente');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const mobileColumns: ColumnsType<AppointmentType> = [
     {
@@ -194,6 +244,7 @@ export default function ClientesPage() {
               icon={<UserAddOutlined />}
               size="small"
               className="md:hidden"
+              onClick={() => setIsModalVisible(true)}
             />
           ) : (
             <Space>
@@ -204,7 +255,11 @@ export default function ClientesPage() {
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 200 }}
               />
-              <Button type="primary" icon={<UserAddOutlined />}>
+              <Button
+                type="primary"
+                icon={<UserAddOutlined />}
+                onClick={() => setIsModalVisible(true)}
+              >
                 Novo Cliente
               </Button>
             </Space>
@@ -232,11 +287,57 @@ export default function ClientesPage() {
         <Table
           columns={isMobile ? mobileColumns : desktopColumns}
           dataSource={filteredData}
+          loading={loading}
           pagination={{ pageSize: 5, simple: isMobile }}
           size="small"
           scroll={{ x: true }}
         />
       </Card>
+
+      {/* Modal para criar cliente */}
+      <Modal
+        title="Novo Cliente"
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        onOk={() => form.submit()}
+        okText="Criar"
+        cancelText="Cancelar"
+      >
+        <Form form={form} layout="vertical" onFinish={handleCreateClient}>
+          <Form.Item
+            label="Nome"
+            name="name"
+            rules={[{ required: true, message: 'Por favor, insira o nome do cliente' }]}
+          >
+            <Input placeholder="Ex: João Silva" />
+          </Form.Item>
+          <Form.Item
+            label="Telefone"
+            name="phone"
+            rules={[{ required: true, message: 'Por favor, insira o telefone do cliente' }]}
+          >
+            <Input placeholder="Ex: (11) 98765-4321" />
+          </Form.Item>
+          <Form.Item
+            label="E-mail"
+            name="email"
+            rules={[{ required: false, message: 'Por favor, insira o e-mail do cliente' }]}
+          >
+            <Input placeholder="Ex: joao.silva@example.com" />
+          </Form.Item>
+          <Form.Item
+            label="Nível de Fidelidade"
+            name="loyalty"
+            rules={[{ required: true, message: 'Por favor, selecione o nível de fidelidade' }]}
+          >
+            <Select placeholder="Selecione o nível de fidelidade">
+              <Select.Option value="VIP">VIP</Select.Option>
+              <Select.Option value="Premium">Premium</Select.Option>
+              <Select.Option value="Regular">Regular</Select.Option>
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* Filtro Drawer apenas no mobile */}
       {isMobile && (
