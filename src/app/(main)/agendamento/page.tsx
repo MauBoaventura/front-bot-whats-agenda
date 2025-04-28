@@ -132,14 +132,6 @@ export default function CriarAgendamentoPage() {
       // Encontrar o cliente selecionado
       const selectedClient = clients.find(c => c.id === formData.client);
       
-      // Encontrar o serviço selecionado
-      const selectedService = services.find(s => s.id === formData.service);
-      
-      // Encontrar o profissional selecionado (se houver)
-      const selectedProfessional = formData.professional ? 
-        professionals.find(p => p.id === formData.professional) : 
-        undefined;
-      
       // Combinando a data e hora em um objeto Date
       const dataHora = new Date(
         formData.date.year(), 
