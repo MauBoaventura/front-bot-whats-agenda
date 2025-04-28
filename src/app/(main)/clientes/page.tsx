@@ -26,7 +26,7 @@ import { useEffect, useState } from 'react';
 const { useBreakpoint } = Grid;
 
 interface AppointmentType {
-  id: string;
+  key: string;
   name: string;
   phone: string;
   email: string;
@@ -96,7 +96,7 @@ export default function ClientesPage() {
     setLoading(true);
     try {
       const newClient = {
-        id: values.id || null, // Se não houver ID, é uma criação
+        id: values.key || null, // Se não houver ID, é uma criação
         nome: values.name,
         telefone: values.phone,
         email: values.email,
@@ -127,7 +127,7 @@ export default function ClientesPage() {
         setClients((prev) => [
           ...prev,
           {
-            id: String(createdClient.id),
+            key: String(createdClient.id),
             name: createdClient.nome,
             phone: createdClient.telefone,
             email: createdClient.email,
@@ -159,9 +159,9 @@ export default function ClientesPage() {
         // Atualizar a lista localmente
         setClients((prev) =>
           prev.map((client) =>
-            client.id === updatedClient.id
+            client.key === updatedClient.id
               ? {
-                id: String(updatedClient.id),
+                key: String(updatedClient.id),
                 name: updatedClient.nome,
                 phone: updatedClient.telefone,
                 email: updatedClient.email,
@@ -352,6 +352,7 @@ export default function ClientesPage() {
           pagination={{ pageSize: 5, simple: isMobile }}
           size="small"
           scroll={{ x: true }}
+          rowKey="id" // Certifique-se de que o Ant Design usa a propriedade "key"
         />
       </Card>
 
@@ -364,42 +365,48 @@ export default function ClientesPage() {
         okText={form.getFieldValue('id') ? "Atualizar" : "Criar"}
         cancelText="Cancelar"
         confirmLoading={loading}
+        afterClose={() => form?.resetFields()} // Resetar campos quando o modal fechar
       >
-        <Form form={form} layout="vertical" onFinish={handleCreateOrUpdateClient}>
+        <Form
+          form={form} 
+          preserve={false}
+          layout="vertical"
+          onFinish={handleCreateOrUpdateClient}
+        >
           <Form.Item name="id" hidden>
-        <Input />
+            <Input />
           </Form.Item>
           <Form.Item
-        label="Nome"
-        name="name"
-        rules={[{ required: true, message: 'Por favor, insira o nome do cliente' }]}
+            label="Nome"
+            name="name"
+            rules={[{ required: true, message: 'Por favor, insira o nome do cliente' }]}
           >
-        <Input placeholder="Ex: João Silva" />
+            <Input placeholder="Ex: João Silva" />
           </Form.Item>
           <Form.Item
-        label="Telefone"
-        name="phone"
-        rules={[{ required: true, message: 'Por favor, insira o telefone do cliente' }]}
+            label="Telefone"
+            name="phone"
+            rules={[{ required: true, message: 'Por favor, insira o telefone do cliente' }]}
           >
-        <Input placeholder="Ex: (11) 98765-4321" />
+            <Input placeholder="Ex: (11) 98765-4321" />
           </Form.Item>
           <Form.Item
-        label="E-mail"
-        name="email"
-        rules={[{ required: false, message: 'Por favor, insira o e-mail do cliente' }]}
+            label="E-mail"
+            name="email"
+            rules={[{ required: false, message: 'Por favor, insira o e-mail do cliente' }]}
           >
-        <Input placeholder="Ex: joao.silva@example.com" />
+            <Input placeholder="Ex: joao.silva@example.com" />
           </Form.Item>
           <Form.Item
-        label="Nível de Fidelidade"
-        name="loyalty"
-        rules={[{ required: true, message: 'Por favor, selecione o nível de fidelidade' }]}
+            label="Nível de Fidelidade"
+            name="loyalty"
+            rules={[{ required: true, message: 'Por favor, selecione o nível de fidelidade' }]}
           >
-        <Select placeholder="Selecione o nível de fidelidade">
-          <Select.Option value="VIP">VIP</Select.Option>
-          <Select.Option value="Premium">Premium</Select.Option>
-          <Select.Option value="Regular">Regular</Select.Option>
-        </Select>
+            <Select placeholder="Selecione o nível de fidelidade">
+              <Select.Option value="VIP">VIP</Select.Option>
+              <Select.Option value="Premium">Premium</Select.Option>
+              <Select.Option value="Regular">Regular</Select.Option>
+            </Select>
           </Form.Item>
         </Form>
       </Modal>
