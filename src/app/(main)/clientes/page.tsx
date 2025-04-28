@@ -46,6 +46,7 @@ export default function ClientesPage() {
   const [clients, setClients] = useState<AppointmentType[]>([]);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const [editingClient, setEditingClient] = useState<AppointmentType | null>(null);
 
   // Função para buscar os clientes da API
   const fetchClients = async () => {
@@ -60,7 +61,7 @@ export default function ClientesPage() {
 
       // Formatar os dados recebidos da API
       const formattedData: AppointmentType[] = data.map((item: any) => ({
-        id: String(item.id),
+        key: String(item.id),
         name: item.nome,
         phone: item.telefone,
         email: item.email,
@@ -91,6 +92,12 @@ export default function ClientesPage() {
 
     return matchesSearch && matchesLoyalty;
   });
+
+  useEffect(() => {
+    if (editingClient) {
+      form.setFieldsValue(editingClient);
+    }
+  }, [editingClient, form]);
 
   const handleCreateOrUpdateClient = async (values: AppointmentType) => {
     setLoading(true);
@@ -186,8 +193,18 @@ export default function ClientesPage() {
   };
 
   const handleEditClient = async (client: AppointmentType) => {
-    form.setFieldsValue(client);
     setIsModalVisible(true);
+    setEditingClient(client);
+
+    setTimeout(() => {
+      form.setFieldsValue({
+        id: client.key, // 👈 aqui converte corretamente
+        name: client.name,
+        phone: client.phone,
+        email: client.email,
+        loyalty: client.loyalty,
+      });
+    }, 0);
   };
 
   const mobileColumns: ColumnsType<AppointmentType> = [
@@ -352,28 +369,32 @@ export default function ClientesPage() {
           pagination={{ pageSize: 5, simple: isMobile }}
           size="small"
           scroll={{ x: true }}
-          rowKey="id" // Certifique-se de que o Ant Design usa a propriedade "key"
+          rowKey="key"
         />
       </Card>
 
       {/* Modal para criar cliente */}
       <Modal
-        title={form.getFieldValue('id') ? "Atualizar Cliente" : "Novo Cliente"}
+        title={editingClient ? "Atualizar Cliente" : "Novo Cliente"}
         open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={() => {
+          setIsModalVisible(false);
+          setEditingClient(null);
+          form.resetFields();
+        }}
         onOk={() => form.submit()}
-        okText={form.getFieldValue('id') ? "Atualizar" : "Criar"}
+        okText={editingClient ? "Atualizar" : "Criar"}
         cancelText="Cancelar"
         confirmLoading={loading}
-        afterClose={() => form?.resetFields()} // Resetar campos quando o modal fechar
+        forceRender
       >
         <Form
-          form={form} 
+          form={form}
           preserve={false}
           layout="vertical"
           onFinish={handleCreateOrUpdateClient}
         >
-          <Form.Item name="id" hidden>
+          <Form.Item name="key" hidden>
             <Input />
           </Form.Item>
           <Form.Item

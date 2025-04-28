@@ -21,6 +21,14 @@ interface AppointmentType {
   payment: 'nao_pago' | 'pago' | 'em_processamento'; // Atualizado
 }
 
+// Definir novas label para os status de pagamento
+const paymentLabels: Record<string, string> = {
+  nao_pago: 'Não Pago',
+  pago: 'Pago',
+  em_processamento: 'Em Processamento',
+};
+
+
 export default function AgendaPage() {
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -149,7 +157,7 @@ export default function AgendaPage() {
       const updatedAppointment = await response.json();
       let service = 'Serviço não encontrado';
       if (typeof updatedAppointment.servico === 'string') {
-         service = services.find((service) => service.id === String(updatedAppointment.servico))?.nome || 'Serviço não encontrado';
+        service = services.find((service) => service.id === String(updatedAppointment.servico))?.nome || 'Serviço não encontrado';
       } else {
         service = updatedAppointment.servico.nome;
       }
@@ -242,7 +250,7 @@ export default function AgendaPage() {
           <Tag
             color={
               record.status === 'confirmado' ? 'green' :
-              record.status === 'pendente' ? 'orange' : 'red'
+                record.status === 'pendente' ? 'orange' : 'red'
             }
             className="text-xs"
           >
@@ -253,12 +261,12 @@ export default function AgendaPage() {
               record.payment === 'pago'
                 ? 'green'
                 : record.payment === 'em_processamento'
-                ? 'blue'
-                : 'red'
+                  ? 'blue'
+                  : 'red'
             }
             className="text-xs"
           >
-            {record.payment.toUpperCase()}
+            {paymentLabels[record.payment].toUpperCase()}
           </Tag>
         </div>
       ),
@@ -358,11 +366,11 @@ export default function AgendaPage() {
             payment === 'pago'
               ? 'green'
               : payment === 'em_processamento'
-              ? 'blue'
-              : 'red'
+                ? 'blue'
+                : 'red'
           }
         >
-          {payment.toUpperCase()}
+          {paymentLabels[payment].toUpperCase()}
         </Tag>
       ),
     },
