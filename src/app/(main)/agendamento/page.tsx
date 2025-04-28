@@ -24,7 +24,7 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 dayjs.locale('pt-br');
 
@@ -49,21 +49,9 @@ export default function CriarAgendamentoPage() {
   const [form] = Form.useForm();
   const [selectedClient, setSelectedClient] = useState<ClientType | null>(null);
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
+  const [clients, setClients] = useState<ClientType[]>([]);
+  const [services, setServices] = useState<ServiceType[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // Dados mockados
-  const clients: ClientType[] = [
-    { id: '1', name: 'João Silva', phone: '(11) 99999-9999', email: 'joao@email.com' },
-    { id: '2', name: 'Maria Souza', phone: '(11) 98888-8888', email: 'maria@email.com' },
-    { id: '3', name: 'Carlos Oliveira', phone: '(11) 97777-7777', email: 'carlos@email.com' },
-  ];
-
-  const services: ServiceType[] = [
-    { id: '1', name: 'Corte de Cabelo', duration: 30, price: 50 },
-    { id: '2', name: 'Barba', duration: 20, price: 30 },
-    { id: '3', name: 'Manicure', duration: 45, price: 40 },
-    { id: '4', name: 'Coloração', duration: 90, price: 120 },
-  ];
 
   const professionals = [
     { id: '1', name: 'Ana Paula' },
@@ -71,17 +59,140 @@ export default function CriarAgendamentoPage() {
     { id: '3', name: 'Juliana Santos' },
   ];
 
-  const onFinish = async (values: { date: dayjs.Dayjs; time: dayjs.Dayjs }) => {
+  // Função para buscar os serviços da API
+  const fetchServices = async () => {
     setLoading(true);
     try {
-      // Simular chamada API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/servicos`);
+      if (!response.ok) {
+        throw new Error('Erro ao buscar serviços');
+      }
 
+      const data = await response.json();
+
+      // Mapear os dados da API para o formato esperado pelo componente
+      // e filtrar apenas serviços ativos
+      const formattedServices: ServiceType[] = data
+        .filter((item: any) => item.status === true)
+        .map((item: any) => ({
+          id: String(item.id),
+          name: item.nome,
+          duration: item.duracao,
+          price: parseFloat(item.preco),
+        }));
+
+      setServices(formattedServices);
+    } catch (error) {
+      console.error(error);
+      message.error('Erro ao carregar os serviços');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Função para buscar os clientes da API
+  const fetchClients = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/clientes`);
+      if (!response.ok) {
+        throw new Error('Erro ao buscar clientes');
+      }
+
+      const data = await response.json();
+
+      // Formatar os dados recebidos da API
+      const formattedClients: ClientType[] = data.map((item: any) => ({
+        id: String(item.id),
+        name: item.nome,
+        phone: item.telefone,
+        email: item.email,
+      }));
+
+      setClients(formattedClients);
+    } catch (error) {
+      console.error(error);
+      message.error('Erro ao carregar os clientes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClients(); // Buscar clientes ao carregar a página
+    fetchServices(); // Buscar serviços ao carregar a página
+  }, []);
+
+  const onFinish = async () => {
+    setLoading(true);
+    try {
+      // Obter os dados do formulário
+      const formData = form.getFieldsValue();
+      
+      // Encontrar o cliente selecionado
+      const selectedClient = clients.find(c => c.id === formData.client);
+      
+      // Encontrar o serviço selecionado
+      const selectedService = services.find(s => s.id === formData.service);
+      
+      // Encontrar o profissional selecionado (se houver)
+      const selectedProfessional = formData.professional ? 
+        professionals.find(p => p.id === formData.professional) : 
+        undefined;
+      
+      // Combinando a data e hora em um objeto Date
+      const dataHora = new Date(
+        formData.date.year(), 
+        formData.date.month(), 
+        formData.date.date(),
+        formData.time.hour(),
+        formData.time.minute()
+      );
+      
+      // Formatando os dados para envio à API conforme o DTO
+      const appointmentData = {
+        clienteTelefone: selectedClient?.phone || '',
+        clienteNome: selectedClient?.name,
+        servico: formData.service,
+        profissional: formData.professional ? {
+          id: formData.professional
+        } : undefined,
+        data: dataHora,
+        horario: formData.time.format('HH:mm'),
+        observacao: formData.notes || undefined,
+        status: 'pendente',
+        statusPagamento: 'nao_pago',
+        lembreteEnviado: false
+      };
+
+      console.log('Dados que serão enviados:', appointmentData);
+
+      // Enviar os dados para a API
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agendamento`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(appointmentData),
+      });
+
+      // Verificar se houve erro na resposta
+      if (response.status === 400) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao criar agendamento');
+      }
+
+      if (!response.ok) {
+        throw new Error('Erro ao criar agendamento');
+      }
+
+      // Agendamento criado com sucesso
       message.success('Agendamento criado com sucesso!');
       form.resetFields();
       setSelectedClient(null);
       setSelectedService(null);
-    } catch {
+    } catch (error) {
+      console.error(error);
       message.error('Erro ao criar agendamento');
     } finally {
       setLoading(false);

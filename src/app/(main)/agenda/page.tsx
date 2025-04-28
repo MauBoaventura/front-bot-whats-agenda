@@ -24,7 +24,6 @@ interface AppointmentType {
 export default function AgendaPage() {
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentType | null>(null);
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [paymentFilter, setPaymentFilter] = useState<string | null>(null);
@@ -83,7 +82,6 @@ export default function AgendaPage() {
 
   // Função para editar um agendamento
   const handleEditAppointment = (appointment: AppointmentType) => {
-    setSelectedAppointment(appointment);
     form.setFieldsValue(appointment);
     setIsModalVisible(true);
   };
@@ -93,7 +91,7 @@ export default function AgendaPage() {
     setLoading(true);
     try {
 
-      const { key, ...appointmentWithoutKey } = appointment;
+      const { key } = appointment;
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agenda/${key}`, {
         method: 'PATCH',
         headers: {

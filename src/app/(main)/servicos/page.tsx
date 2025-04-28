@@ -31,7 +31,6 @@ export default function ServicosPage() {
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
-  const [messageApi, contextHolder] = message.useMessage();
 
   // Função para buscar os serviços da API
   const fetchServices = async () => {
@@ -296,7 +295,6 @@ export default function ServicosPage() {
 
   return (
     <div className="p-4">
-      {contextHolder}
       <Card
         title="Serviços"
         extra={
