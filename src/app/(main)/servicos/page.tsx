@@ -44,7 +44,6 @@ export default function ServicosPage() {
 
       // Dados recebidos da API
       const data: any[] = await response.json();
-      console.log('Serviços recebidos:', data);
       // Converter os dados para o formato da entidade Servico
       const formattedData: ServiceType[] = data.map((item) => ({
         id: String(item.id), // Convertendo para string, se necessário

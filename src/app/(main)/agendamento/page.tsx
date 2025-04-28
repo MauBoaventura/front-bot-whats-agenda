@@ -77,14 +77,6 @@ export default function CriarAgendamentoPage() {
       // Simular chamada API
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      console.log('Dados do agendamento:', {
-        ...values,
-        client: selectedClient,
-        service: selectedService,
-        date: values.date.format('YYYY-MM-DD'),
-        time: values.time.format('HH:mm'),
-      });
-
       message.success('Agendamento criado com sucesso!');
       form.resetFields();
       setSelectedClient(null);
