@@ -1,4 +1,5 @@
 'use client';
+import { useMessage } from '@/hooks/useMessage';
 import { PlusOutlined } from '@ant-design/icons';
 import {
   Button,
@@ -7,7 +8,6 @@ import {
   Form,
   Input,
   InputNumber,
-  message,
   Modal,
   Select,
   Table,
@@ -31,6 +31,7 @@ export default function ServicosPage() {
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const message = useMessage();
 
   // Função para buscar os serviços da API
   const fetchServices = async () => {
