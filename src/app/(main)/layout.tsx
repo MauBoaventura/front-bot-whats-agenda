@@ -77,10 +77,10 @@ const mapPathToKey = (path: string) => {
     <Layout className="min-h-screen">
       {/* Header fixo */}
       <Header
-        className={`fixed top-0 z-[100] flex h-16 w-full items-center justify-between shadow-md transition-all duration-300 !pl-4 ${
-          theme === 'dark' ? 'bg-[#001529]' : '!bg-white'
-        } ${!isMobile && !collapsedSidebar ? 'ml-[250px]' : !isMobile ? 'ml-[80px]' : 'ml-0'} px-4`}
-      >
+      className={`fixed top-0 z-[100] flex h-16 w-full items-center justify-between shadow-md transition-all duration-300 ${
+        theme === 'dark' ? 'bg-[#001529]' : '!bg-white'
+      } ${!isMobile && !collapsedSidebar ? '!pl-[260px]' : !isMobile ? '!pl-[90px]' : ''} px-4`}>
+      
         <Space className='flex items-center'>
           {isMobile ? (
             <Button
