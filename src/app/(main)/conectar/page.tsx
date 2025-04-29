@@ -16,25 +16,24 @@ export default function WhatsAppConnectionPage() {
 
   // Mock data - substituir por chamadas reais à API
   const mockPhoneNumber = '+55 (11) 98765-4321';
-
   const checkConnectionStatus = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/whatsapp/status`);
-      const mockResponse = { 
-        connected: !!res.json, 
-        phoneNumber: mockPhoneNumber
-      };
-      
-      if(res.status === 500) {
+      const data = await res.json();
+
+      if (res.status === 500 || !data.status?.isAuthenticated) {
         setIsConnected(false);
-      }
-      
-      setIsConnected(mockResponse.connected);
-      if (mockResponse.connected) {
-        setPhoneNumber(mockResponse.phoneNumber);
+        setPhoneNumber(null);
+      } else {
+        setIsConnected(data.status.isAuthenticated);
+        if (data.status.isAuthenticated) {
+          setPhoneNumber(data.status.phoneNumber || mockPhoneNumber);
+        }
       }
     } catch (error) {
       console.error('Erro ao verificar status:', error);
+      setIsConnected(false);
+      setPhoneNumber(null);
     } finally {
       setLoading(false);
     }
@@ -70,12 +69,15 @@ export default function WhatsAppConnectionPage() {
   };
 
   useEffect(() => {
-    checkConnectionStatus();
-    
     if (!isConnected) {
+      checkConnectionStatus();
       fetchQrCode();
-      const interval = setInterval(fetchQrCode, 10000);
-      return () => clearInterval(interval);
+      const qrCodeInterval = setInterval(fetchQrCode, 10000);
+      const statusInterval = setInterval(checkConnectionStatus, 10000);
+      return () => {
+        clearInterval(qrCodeInterval);
+        clearInterval(statusInterval);
+      };
     }
   }, [isConnected]);
 
