@@ -2,6 +2,7 @@
 'use client';
 
 import { useMessage } from '@/hooks/useMessage';
+import { get, post, put } from '@/services'; // Importa as funções do serviço
 import { FilterOutlined, MoreOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { Avatar, Badge, Button, Card, DatePicker, Drawer, Dropdown, Form, Input, Modal, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -18,16 +19,14 @@ interface AppointmentType {
   client: string;
   service: string;
   status: 'confirmado' | 'pendente' | 'cancelado';
-  payment: 'nao_pago' | 'pago' | 'em_processamento'; // Atualizado
+  payment: 'nao_pago' | 'pago' | 'em_processamento';
 }
 
-// Definir novas label para os status de pagamento
 const paymentLabels: Record<string, string> = {
   nao_pago: 'Não Pago',
   pago: 'Pago',
   em_processamento: 'Em Processamento',
 };
-
 
 export default function AgendaPage() {
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
@@ -36,7 +35,7 @@ export default function AgendaPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [paymentFilter, setPaymentFilter] = useState<string | null>(null);
   const [appointments, setAppointments] = useState<AppointmentType[]>([]);
-  const [services, setServices] = useState<{ id: string; nome: string }[]>([]); // Estado para os serviços
+  const [services, setServices] = useState<{ id: string; nome: string }[]>([]);
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
@@ -46,12 +45,8 @@ export default function AgendaPage() {
   // Função para buscar os serviços da API
   const fetchServices = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/servicos`);
-      if (!response.ok) {
-        throw new Error('Erro ao buscar os serviços');
-      }
-      const data = await response.json();
-      setServices(data); // Atualiza o estado com os serviços retornados
+      const data = await get('/servicos'); // Usando o serviço `get`
+      setServices(data);
     } catch (error) {
       console.error(error);
       message.error('Erro ao carregar os serviços');
@@ -62,11 +57,7 @@ export default function AgendaPage() {
   const fetchAppointments = async (date: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agenda?date=${date}`);
-      if (!response.ok) {
-        throw new Error('Erro ao buscar os dados da agenda');
-      }
-      const data = await response.json();
+      const data = await get('/agenda', { date }); // Usando o serviço `get` com parâmetros
       const formattedData = data.map((item: any) => ({
         key: item.id.toString(),
         time: item.horario,
@@ -78,14 +69,15 @@ export default function AgendaPage() {
       setAppointments(formattedData);
     } catch (error) {
       console.error(error);
+      message.error('Erro ao carregar os agendamentos');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchServices(); // Busca os serviços ao carregar a página
-    fetchAppointments(selectedDate.format('YYYY-MM-DD')); // Busca os agendamentos ao carregar a página
+    fetchServices();
+    fetchAppointments(selectedDate.format('YYYY-MM-DD'));
   }, [selectedDate]);
 
   // Função para editar um agendamento
@@ -98,26 +90,12 @@ export default function AgendaPage() {
   const handleCancelAppointment = async (appointment: AppointmentType) => {
     setLoading(true);
     try {
-
-      const { key } = appointment;
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agenda/${key}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: 'cancelado' }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao cancelar o agendamento');
-      }
-
+      await put(`/agenda/${appointment.key}`, { status: 'cancelado' }); // Usando o serviço `put`
       setAppointments((prev) =>
         prev.map((appt) =>
           appt.key === appointment.key ? { ...appt, status: 'cancelado' } : appt
         )
       );
-
       message.success('Agendamento cancelado com sucesso!');
     } catch (error) {
       console.error(error);
@@ -131,43 +109,26 @@ export default function AgendaPage() {
   const handleSaveAppointment = async (values: AppointmentType) => {
     setLoading(true);
     try {
-      // Transformar os dados para o formato esperado pela API
       const transformedData = {
-        clienteTelefone: values.client, // Assumindo que o campo "client" contém o telefone
-        clienteNome: values.client, // Opcional, pode ser ajustado se necessário
-        servico: services.find((service) => service.id === values.service)?.id, // Busca o serviço pelo nome
+        clienteTelefone: values.client,
+        clienteNome: values.client,
+        servico: values.service,
         horario: values.time,
         status: values.status,
         statusPagamento: values.payment,
-        lembreteEnviado: false, // Valor padrão
+        lembreteEnviado: false,
       };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agenda/${values.key || ''}`, {
-        method: values.key ? 'PUT' : 'POST', // PUT para edição, POST para criação
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(transformedData),
-      });
+      const response = values.key
+        ? await put(`/agenda/${values.key}`, transformedData) // Atualização
+        : await post('/agenda', transformedData); // Criação
 
-      if (!response.ok) {
-        throw new Error('Erro ao salvar o agendamento');
-      }
-
-      const updatedAppointment = await response.json();
-      let service = 'Serviço não encontrado';
-      if (typeof updatedAppointment.servico === 'string') {
-        service = services.find((service) => service.id === String(updatedAppointment.servico))?.nome || 'Serviço não encontrado';
-      } else {
-        service = updatedAppointment.servico.nome;
-      }
-
-      // Atualizar a lista de agendamentos
+      const updatedAppointment = response;
       const formattedAppointment = {
         key: updatedAppointment.id.toString(),
         time: updatedAppointment.horario,
         client: updatedAppointment.clienteNome || updatedAppointment.clienteTelefone,
-        service,
+        service: updatedAppointment.servico.nome,
         status: updatedAppointment.status,
         payment: updatedAppointment.statusPagamento,
       };
@@ -178,7 +139,7 @@ export default function AgendaPage() {
           : [...prev, formattedAppointment]
       );
 
-      message.success('Agendamento atualizado com sucesso!');
+      message.success('Agendamento salvo com sucesso!');
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {

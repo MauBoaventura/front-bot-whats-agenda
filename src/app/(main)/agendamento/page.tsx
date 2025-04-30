@@ -1,6 +1,7 @@
 // app/dashboard/criar-agendamento/page.tsx
 'use client';
 
+import { get, post } from '@/services'; // Importa os métodos centralizados
 import {
   PhoneOutlined,
   PlusOutlined,
@@ -63,15 +64,7 @@ export default function CriarAgendamentoPage() {
   const fetchServices = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/servicos`);
-      if (!response.ok) {
-        throw new Error('Erro ao buscar serviços');
-      }
-
-      const data = await response.json();
-
-      // Mapear os dados da API para o formato esperado pelo componente
-      // e filtrar apenas serviços ativos
+      const data = await get('/servicos'); // Usando o serviço `get`
       const formattedServices: ServiceType[] = data
         .filter((item: any) => item.status === true)
         .map((item: any) => ({
@@ -94,14 +87,7 @@ export default function CriarAgendamentoPage() {
   const fetchClients = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/clientes`);
-      if (!response.ok) {
-        throw new Error('Erro ao buscar clientes');
-      }
-
-      const data = await response.json();
-
-      // Formatar os dados recebidos da API
+      const data = await get('/clientes'); // Usando o serviço `get`
       const formattedClients: ClientType[] = data.map((item: any) => ({
         id: String(item.id),
         name: item.nome,
@@ -126,59 +112,34 @@ export default function CriarAgendamentoPage() {
   const onFinish = async () => {
     setLoading(true);
     try {
-      // Obter os dados do formulário
       const formData = form.getFieldsValue();
-      
-      // Encontrar o cliente selecionado
       const selectedClient = clients.find(c => c.id === formData.client);
-      
-      // Combinando a data e hora em um objeto Date
+
       const dataHora = new Date(
-        formData.date.year(), 
-        formData.date.month(), 
+        formData.date.year(),
+        formData.date.month(),
         formData.date.date(),
         formData.time.hour(),
         formData.time.minute()
       );
-      
-      // Formatando os dados para envio à API conforme o DTO
+
       const appointmentData = {
         clienteTelefone: selectedClient?.phone || '',
         clienteNome: selectedClient?.name,
         servico: formData.service,
-        profissional: formData.professional ? {
-          id: formData.professional
-        } : undefined,
+        profissional: formData.professional ? { id: formData.professional } : undefined,
         data: dataHora,
         horario: formData.time.format('HH:mm'),
         observacao: formData.notes || undefined,
         status: 'pendente',
         statusPagamento: 'nao_pago',
-        lembreteEnviado: false
+        lembreteEnviado: false,
       };
 
       console.log('Dados que serão enviados:', appointmentData);
 
-      // Enviar os dados para a API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agendamento`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(appointmentData),
-      });
+      await post('/agendamento', appointmentData); // Usando o serviço `post`
 
-      // Verificar se houve erro na resposta
-      if (response.status === 400) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao criar agendamento');
-      }
-
-      if (!response.ok) {
-        throw new Error('Erro ao criar agendamento');
-      }
-
-      // Agendamento criado com sucesso
       message.success('Agendamento criado com sucesso!');
       form.resetFields();
       setSelectedClient(null);

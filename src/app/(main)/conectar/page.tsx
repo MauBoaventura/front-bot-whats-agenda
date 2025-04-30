@@ -1,5 +1,6 @@
 'use client';
 
+import { get } from '@/services'; // Importa o método centralizado para requisições
 import { CheckCircleOutlined, LogoutOutlined, WhatsAppOutlined } from '@ant-design/icons';
 import { Avatar, Badge, Button, Card, Modal, Typography } from 'antd';
 import Image from 'next/image';
@@ -14,20 +15,16 @@ export default function WhatsAppConnectionPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
-  // Mock data - substituir por chamadas reais à API
-  const mockPhoneNumber = '+55 (11) 98765-4321';
   const checkConnectionStatus = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/whatsapp/status`);
-      const data = await res.json();
-
-      if (res.status === 500 || !data.status?.isAuthenticated) {
+      const data = await get('/whatsapp/status'); // Usando o serviço `get`
+      if (!data.status?.isAuthenticated) {
         setIsConnected(false);
         setPhoneNumber(null);
       } else {
         setIsConnected(data.status.isAuthenticated);
         if (data.status.isAuthenticated) {
-          setPhoneNumber(data.status.phoneNumber || mockPhoneNumber);
+          setPhoneNumber(data.status.phoneNumber);
         }
       }
     } catch (error) {
@@ -41,11 +38,8 @@ export default function WhatsAppConnectionPage() {
 
   const fetchQrCode = async () => {
     try {
-      // Simulação de geração de QR Code
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/whatsapp/qrcode-base64`);
-      const data = await res.json();
+      const data = await get('/whatsapp/qrcode-base64'); // Usando o serviço `get`
       if (data.qrCode) setQrCode(data.qrCode);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simula atraso na geração do QR Code
     } catch (error) {
       console.error('Erro ao buscar QR Code:', error);
     }
@@ -54,9 +48,7 @@ export default function WhatsAppConnectionPage() {
   const handleLogout = async () => {
     try {
       setLoading(true);
-      // Simulação de logout
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/whatsapp/logout`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await get('/whatsapp/logout'); // Usando o serviço `get` para logout
       setIsConnected(false);
       setPhoneNumber(null);
       setModalVisible(false);

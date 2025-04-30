@@ -1,5 +1,6 @@
 'use client';
 import { useMessage } from "@/hooks/useMessage";
+import { get, post, put } from "@/services"; // Importa as funções do serviço
 import {
   FilterOutlined,
   SearchOutlined,
@@ -52,12 +53,7 @@ export default function ClientesPage() {
   const fetchClients = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/clientes`);
-      if (!response.ok) {
-        throw new Error('Erro ao buscar clientes');
-      }
-
-      const data = await response.json();
+      const data = await get('/clientes'); // Usando o serviço `get`
 
       // Formatar os dados recebidos da API
       const formattedData: AppointmentType[] = data.map((item: any) => ({
@@ -109,26 +105,10 @@ export default function ClientesPage() {
         email: values.email,
         fidelidade: values.loyalty,
       };
-      const { id, ...clientData } = newClient;
 
       if (!newClient.id) {
         // Criação de um novo cliente
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/clientes`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(clientData),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          const errorMessage = errorData.message || 'Erro ao criar cliente';
-          message.error(errorMessage);
-          return;
-        }
-
-        const createdClient = await response.json();
+        const createdClient = await post('/clientes', newClient); // Usando o serviço `post`
 
         // Atualizar a lista localmente
         setClients((prev) => [
@@ -146,35 +126,20 @@ export default function ClientesPage() {
         message.success('Cliente criado com sucesso!');
       } else {
         // Atualização de um cliente existente
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/clientes/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(clientData),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          const errorMessage = errorData.message || 'Erro ao atualizar cliente';
-          message.error(errorMessage);
-          return;
-        }
-
-        const updatedClient = await response.json();
+        const updatedClient = await put(`/clientes/${newClient.id}`, newClient); // Usando o serviço `put`
 
         // Atualizar a lista localmente
         setClients((prev) =>
           prev.map((client) =>
             client.key === updatedClient.id
               ? {
-                key: String(updatedClient.id),
-                name: updatedClient.nome,
-                phone: updatedClient.telefone,
-                email: updatedClient.email,
-                avatar: updatedClient.avatar || client.avatar,
-                loyalty: updatedClient.fidelidade || 'Regular',
-              }
+                  key: String(updatedClient.id),
+                  name: updatedClient.nome,
+                  phone: updatedClient.telefone,
+                  email: updatedClient.email,
+                  avatar: updatedClient.avatar || client.avatar,
+                  loyalty: updatedClient.fidelidade || 'Regular',
+                }
               : client
           )
         );
