@@ -9,6 +9,7 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'MyApp/1.0', // Substitua pelo User-Agent desejado
+        'ngrok-skip-browser-warning': 'true'
     },
 });
 
